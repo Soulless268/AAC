@@ -12,9 +12,9 @@ local hum
 
 if plr.PlayerGui:FindFirstChild("NickAAC") then return end
 
-local classes_module = require(rp.Dictionaries.Classes)
-local enemies_module = require(rp.Dictionaries.Enemies)
-local abilities_module = require(rp.Dictionaries.Abilities)
+local classes_module = require(rp.Dictionaries:WaitForChild("Classes"))
+local enemies_module = require(rp.Dictionaries:WaitForChild("Enemies"))
+local abilities_module = require(rp.Dictionaries:WaitForChild("Abilities"))
 
 local ProximityPrompts_Screen = plr.PlayerGui:FindFirstChild("ProximityPrompts")
 
