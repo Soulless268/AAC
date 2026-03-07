@@ -3,23 +3,23 @@
 
 task.wait(1)
 
-local players = game:GetService("Players")
-local tws = game:GetService("TweenService")
-local rs = game:GetService("RunService")
-local rp = game:GetService("ReplicatedStorage")
+players = game:GetService("Players")
+tws = game:GetService("TweenService")
+rs = game:GetService("RunService")
+rp = game:GetService("ReplicatedStorage")
 
-local plr = players.LocalPlayer
-local char
-local hrp
-local hum
+plr = players.LocalPlayer
+char
+hrp
+hum
 
 if plr.PlayerGui:FindFirstChild("NickAAC") then return end
 
-local classes_module = require(rp.Dictionaries.Classes)
-local enemies_module = require(rp.Dictionaries.Enemies)
-local abilities_module = require(rp.Dictionaries.Abilities)
+classes_module = require(rp.Dictionaries.Classes)
+enemies_module = require(rp.Dictionaries.Enemies)
+abilities_module = require(rp.Dictionaries.Abilities)
 
-local ProximityPrompts_Screen = plr.PlayerGui:FindFirstChild("ProximityPrompts")
+ProximityPrompts_Screen = plr.PlayerGui:FindFirstChild("ProximityPrompts")
 
 if not ProximityPrompts_Screen then
 	ProximityPrompts_Screen = Instance.new("ScreenGui")
@@ -29,12 +29,12 @@ if not ProximityPrompts_Screen then
 	ProximityPrompts_Screen.Parent = plr.PlayerGui
 end
 
-local place_ids = {
+place_ids = {
 	80734098185936 , --Main
 	111943251737481, --In Game
 }
 
-local workspace_debug
+workspace_debug
 
 if table.find(place_ids, game.PlaceId) then
 	workspace_debug = workspace
@@ -43,20 +43,20 @@ else
 end
 
 -----Settings-----
-local Minimized = false
-local DESTROYED = false
-local current_catagory = nil
-local run_add_decent = true
-local run_remove_decent = true
-local auto_play = false
-local auto_afk = true
-local current_screen = nil
-local frame_store = {}
-local skills = {
+Minimized = false
+DESTROYED = false
+current_catagory = nil
+run_add_decent = true
+run_remove_decent = true
+auto_play = false
+auto_afk = true
+current_screen = nil
+frame_store = {}
+skills = {
 	["Strike"] = 1,
 	["Guard"] = 1,
 }
-local plr_stats = {
+plr_stats = {
 	["Class"] = nil,
 	["Energy"] = nil,
 	["EXP"] = nil,
@@ -70,50 +70,50 @@ local plr_stats = {
 	["StatPoints"] = nil,
 	["Turn"] = nil,
 }
-local background_image_id = "rbxassetid://86093393173023"
-local truecolor = Color3.fromRGB(170, 170, 0)
-local falsecolor = Color3.fromRGB(163, 162, 165)
+background_image_id = "rbxassetid://86093393173023"
+truecolor = Color3.fromRGB(170, 170, 0)
+falsecolor = Color3.fromRGB(163, 162, 165)
 -----Settings-----
 
-local no_cliping : RBXScriptConnection
-local runner_adddecen : RBXScriptConnection
-local runner_removedecen : RBXScriptConnection
-local runner_sceneevent : RBXScriptConnection
-local runner_changeuievent : RBXScriptConnection
-local runner_combatturnevent : RBXScriptConnection
+no_cliping : RBXScriptConnection
+runner_adddecen : RBXScriptConnection
+runner_removedecen : RBXScriptConnection
+runner_sceneevent : RBXScriptConnection
+runner_changeuievent : RBXScriptConnection
+runner_combatturnevent : RBXScriptConnection
 
 -----SetUp GUI-----
 
-local screen = Instance.new("ScreenGui")
+screen = Instance.new("ScreenGui")
 screen.Name = "NickAAC"
 screen.DisplayOrder = 10000000
 screen.ResetOnSpawn = false
 screen.Parent = plr.PlayerGui
 
-local main_frame : Frame
-local catagories_frame : Frame
-local farming_frame : Frame
+main_frame : Frame
+catagories_frame : Frame
+farming_frame : Frame
 
-local show_button : TextButton
-local close_button : TextButton
-local minimize_button : TextButton
+show_button : TextButton
+close_button : TextButton
+minimize_button : TextButton
 
-local auto_play_button : TextButton
-local auto_afk_button : TextButton
-local refresh_button : TextButton
-local add_decent_button : TextButton
-local remove_decent_button : TextButton
+auto_play_button : TextButton
+auto_afk_button : TextButton
+refresh_button : TextButton
+add_decent_button : TextButton
+remove_decent_button : TextButton
 
 --PreLoad Local Universals Function:
 local function UiCorner(Parent, Ui)
-	local Corner = Instance.new("UICorner")
+	Corner = Instance.new("UICorner")
 	Corner.CornerRadius = Ui
 	Corner.Parent = Parent
 	return Corner
 end
 
 local function UiStroke(Parent)
-	local Stroke = Instance.new("UIStroke")
+	Stroke = Instance.new("UIStroke")
 	Stroke.Color = Color3.fromRGB(255, 255, 255)
 	Stroke.Thickness = 1
 	Stroke.LineJoinMode = Enum.LineJoinMode.Miter
@@ -123,7 +123,7 @@ local function UiStroke(Parent)
 end
 
 local function create_button_catagory(parent, name: string, frame)
-	local button = Instance.new("TextButton")
+	button = Instance.new("TextButton")
 	button.Text = name
 	button.TextColor3 = Color3.fromRGB(255, 255, 255)
 	button.TextScaled = true
@@ -149,12 +149,12 @@ local function create_button_catagory(parent, name: string, frame)
 end
 
 local function create_frame(parent, title: string, description: string, value: any, extra_value: any)
-	local frame = Instance.new("Frame")
+	frame = Instance.new("Frame")
 	frame.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
 	frame.Parent = parent
 	UiStroke(frame)
 
-	local title_label = Instance.new("TextLabel")
+	title_label = Instance.new("TextLabel")
 	title_label.Text = title
 	title_label.TextColor3 = Color3.fromRGB(255, 255, 255)
 	title_label.TextStrokeTransparency = 0
@@ -166,7 +166,7 @@ local function create_frame(parent, title: string, description: string, value: a
 	title_label.Size = UDim2.new(.75,0,.6,0)
 	title_label.Parent = frame
 
-	local description_label
+	description_label
 
 	if description then
 		description_label = Instance.new("TextLabel")
@@ -182,7 +182,7 @@ local function create_frame(parent, title: string, description: string, value: a
 	end
 
 	local function make_value(value)
-		local button
+		button
 		if value == nil then return end
 
 		if typeof(value) == "boolean" then
@@ -209,8 +209,8 @@ local function create_frame(parent, title: string, description: string, value: a
 		return button
 	end
 
-	local e1 = make_value(value)
-	local e2 = make_value(extra_value)
+	e1 = make_value(value)
+	e2 = make_value(extra_value)
 
 	if e2 then
 		title_label.Size = UDim2.new(.5,0,.6,0)
@@ -241,15 +241,15 @@ local function create_frame(parent, title: string, description: string, value: a
 end
 
 local function prefix_name(name)
-	--local prefix = string.match(name, "^(%a+)")
-	local prefix = string.match(name, "^([^%d#]+)")
+	--prefix = string.match(name, "^(%a+)")
+	prefix = string.match(name, "^([^%d#]+)")
 
 	return prefix
 end
 
 local function number_format(number)
-	local formatted = tostring(number)
-	local k
+	formatted = tostring(number)
+	k
 	while true do
 		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
 		if k == 0 then
@@ -260,7 +260,7 @@ local function number_format(number)
 end
 
 local function character_available()
-	local available = false
+	available = false
 	char = plr.Character
 	if not char then return available end
 	hrp = char:FindFirstChild("HumanoidRootPart") :: Part
@@ -304,13 +304,13 @@ end
 local function go_to_pos(pos : CFrame|Vector3, magnitude : number)
 	if not character_available() then return end
 
-	local speed = 200
-	local minTime = 0.01
-	local maxTime = 15
+	speed = 200
+	minTime = 0.01
+	maxTime = 15
 
-	local distance = magnitude
+	distance = magnitude
 
-	local time_ = distance / speed
+	time_ = distance / speed
 
 	time_ = math.clamp(time_, minTime, maxTime)
 
@@ -320,7 +320,7 @@ local function go_to_pos(pos : CFrame|Vector3, magnitude : number)
 		pos = pos
 	end
 
-	local tween = tws:Create(hrp, TweenInfo.new(time_), {CFrame = pos})
+	tween = tws:Create(hrp, TweenInfo.new(time_), {CFrame = pos})
 	tween:Play()
 
 	tween.Completed:Once(function()
@@ -332,14 +332,14 @@ local function go_to_pos(pos : CFrame|Vector3, magnitude : number)
 end
 
 local function add_runner_add_decentdant()
-	local runner = workspace.DescendantAdded:Connect(function(child)
+	runner = workspace.DescendantAdded:Connect(function(child)
 		
 	end)
 	return runner
 end
 
 local function add_runner_remove_decendant()
-	local runner = workspace.DescendantRemoving:Connect(function(child)
+	runner = workspace.DescendantRemoving:Connect(function(child)
 		
 	end)
 	return runner
@@ -416,32 +416,32 @@ local Afk_Auto_Play = function()
 			end
 			
 			if current_screen == "Encounter" then
-				local child = {
+				child = {
 					plr.PlayerGui.EncounterGUI.EncounterFrame.Background.Option1,
 					plr.PlayerGui.EncounterGUI.EncounterFrame.Background.Option2,
 					plr.PlayerGui.EncounterGUI.EncounterFrame.Background.Option3,
 				}
-				local chosen = child[math.random(1, #child)]
+				chosen = child[math.random(1, #child)]
 				aac_encounter_choice(chosen.Title.Text)
 				current_screen = nil
 			end
 			
 			if current_screen == "Choice" then
 				task.wait(1)
-				local child = {}
+				child = {}
 				for _,v in pairs(plr.PlayerGui.SceneGUI.Background.Options:GetChildren()) do
 					if v:IsA("UIListLayout") then continue end
 					table.insert(child, v)
 				end
 				if not child[1] then continue end
-				local chosen = child[math.random(1, #child)]
+				chosen = child[math.random(1, #child)]
 				aac_choice(chosen.Name)
 				task.wait(.25)
 			end
 			
 			if current_screen == "Combat" then
 				if plr:GetAttribute("Turn") then
-					local enemy = workspace.Enemies:GetChildren()[1]
+					enemy = workspace.Enemies:GetChildren()[1]
 					aac_combat("Ability", enemy, "Strike")
 				end
 			end
@@ -513,7 +513,7 @@ do
 		UiStroke(farming_frame)
 
 		do
-			local grid = Instance.new("UIGridLayout")
+			grid = Instance.new("UIGridLayout")
 			grid.CellPadding = UDim2.new(0,0,0,1)
 			grid.CellSize = UDim2.new(1,0,.15,0)
 			grid.FillDirection = "Horizontal"
@@ -543,7 +543,7 @@ do
 		UiStroke(settings_frame)
 
 		do
-			local grid = Instance.new("UIGridLayout")
+			grid = Instance.new("UIGridLayout")
 			grid.CellPadding = UDim2.new(0,0,0,1)
 			grid.CellSize = UDim2.new(1,0,.15,0)
 			grid.FillDirection = "Horizontal"
@@ -569,7 +569,7 @@ do
 		UiStroke(catagories_frame)
 
 		do
-			local grid = Instance.new("UIGridLayout")
+			grid = Instance.new("UIGridLayout")
 			grid.CellPadding = UDim2.new(0,0,0,1)
 			grid.CellSize = UDim2.new(1,0,.15,0)
 			grid.FillDirection = "Horizontal"
