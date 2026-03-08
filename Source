@@ -617,7 +617,6 @@ for i,v in pairs(plr_stats) do
 	plr:GetAttributeChangedSignal(i):Connect(function()
 		plr_stats[i] = plr:GetAttribute(i)
 	end)
-
 end
 
 for i,v in pairs(classes_module) do
@@ -636,6 +635,12 @@ end
 if auto_afk then
 	task.spawn(Afk_Auto_Play)
 end
+
+task.delay(2,function()
+	if not plr_stats.isLoaded then
+		plr_stats.isLoaded = true
+	end
+end)
 
 --Function:
 close_button.MouseButton1Down:Connect(function()
