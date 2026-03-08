@@ -713,3 +713,11 @@ runner_combatturnevent = rp.Remotes.FireTurn.OnClientEvent:Connect(function()
 		current_screen = "Combat"
 	end
 end)
+
+local tp_check = false
+plr.OnTeleport:Connect(function()
+	if not tp_check then
+		tp_check = true
+		syn.queue_on_teleport()('loadstring(game:HttpGet(("https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source"),true))()')
+	end
+end)
