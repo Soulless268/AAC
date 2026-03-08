@@ -388,6 +388,7 @@ local AI_Auto_Play = function()
 	if auto_play then
 		while task.wait() do
 			if not auto_play then break end
+			if not plr_stats.isLoaded then continue end
 
 			-- in Combat
 			-- rp.Remotes.TurnDecision:FireServer("Focus")
@@ -402,6 +403,7 @@ local Afk_Auto_Play = function()
 	if auto_afk then
 		while task.wait() do
 			if not auto_afk then break end
+			if not plr_stats.isLoaded then continue end
 			
 			if current_screen == "Title" then
 				aac_start()
@@ -439,6 +441,12 @@ local Afk_Auto_Play = function()
 			if current_screen == "Combat" then
 				if plr:GetAttribute("Turn") then
 					local enemy = workspace.Enemies:GetChildren()[1]
+					local t_skill = {}
+					for i,v in pairs(skills) do
+						if i == "Guard" then continue end
+						table.insert(t_skill, i)
+					end
+					local chosen = t_skill[math.random(1, #t_skill)]
 					aac_combat("Ability", enemy, "Strike")
 				end
 			end
@@ -718,6 +726,6 @@ local tp_check = false
 plr.OnTeleport:Connect(function()
 	if not tp_check then
 		tp_check = true
-		syn.queue_on_teleport()('loadstring(game:HttpGet(("https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source"),true))()')
+		syn.queue_on_teleport('loadstring(game:HttpGet(("https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source"),true))()')
 	end
 end)
