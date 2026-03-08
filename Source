@@ -388,7 +388,7 @@ local AI_Auto_Play = function()
 	if auto_play then
 		while task.wait() do
 			if not auto_play then break end
-			if not plr_stats.isLoaded then continue end
+			-- if not plr_stats.isLoaded then continue end
 
 			-- in Combat
 			-- rp.Remotes.TurnDecision:FireServer("Focus")
@@ -403,7 +403,7 @@ local Afk_Auto_Play = function()
 	if auto_afk then
 		while task.wait() do
 			if not auto_afk then break end
-			if not plr_stats.isLoaded then continue end
+			-- if not plr_stats.isLoaded then continue end
 			
 			if current_screen == "Title" then
 				aac_start()
