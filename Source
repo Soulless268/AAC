@@ -12,6 +12,13 @@ local hum
 
 if plr.PlayerGui:FindFirstChild("NickAAC") then return end
 
+function missing(t, f, fallback)
+	if type(f) == t then return f end
+	return fallback
+end
+
+local queueteleport =  missing("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
+
 local classes_module = require(rp.Dictionaries:WaitForChild("Classes"))
 local enemies_module = require(rp.Dictionaries:WaitForChild("Enemies"))
 local abilities_module = require(rp.Dictionaries:WaitForChild("Abilities"))
@@ -729,8 +736,8 @@ end)
 
 local tp_check = false
 plr.OnTeleport:Connect(function()
-	if not tp_check then
+	if not tp_check and queueteleport then
 		tp_check = true
-		queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source'))()")
+		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source'))()")
 	end
 end)
