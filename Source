@@ -1,4 +1,4 @@
--- Date Updated -- 13:30 PM -- 9/3/2026 -- DD/MM/YYYY
+-- Date Updated -- 8:00 PM -- 9/3/2026 -- DD/MM/YYYY
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -21,12 +21,17 @@ function checking(t, f, fallback)
 	return fallback
 end
 
-local queueteleport =  checking("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
+function call_module(path)
+    local suc, mod = pcall(require, path)
+    if suc then return mod end
+end
 
-local modifiers_module
-local classes_module
-local enemies_module
-local abilities_module
+local queueteleport = checking("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
+
+local modifiers_module = call_module(rp.Dictionaries:WaitForChild("GameModifiers"))
+local classes_module = call_module(rp.Dictionaries:WaitForChild("Classes"))
+local enemies_module = call_module(rp.Dictionaries:WaitForChild("Enemies"))
+local abilities_module = call_module(rp.Dictionaries:WaitForChild("Abilities"))
 
 local ProximityPrompts_Screen = plr.PlayerGui:FindFirstChild("ProximityPrompts")
 
@@ -52,14 +57,6 @@ if table.find(place_ids, game.PlaceId) then
 	end
 else
 	workspace_debug = workspace:FindFirstChild("Simulate"):FindFirstChild("Game")
-end
-
-if lobby then
-	modifiers_module = require(rp.Dictionaries:WaitForChild("GameModifiers"))
-else
-	classes_module = require(rp.Dictionaries:WaitForChild("Classes"))
-	enemies_module = require(rp.Dictionaries:WaitForChild("Enemies"))
-	abilities_module = require(rp.Dictionaries:WaitForChild("Abilities"))
 end
 
 -----Settings-----
@@ -379,7 +376,15 @@ local Afk_Auto_Play = function()
 			if current_screen == "Combat" then
 				if plr:GetAttribute("Turn") then
 					local enemy = workspace.Enemies:GetChildren()[1]
+					local allies = {}
 					local t_skill = {}
+					for _,v in pairs(plr.PlayerGui.PlayerInfo.AbilitiesFrame.AbilitiesScrollingFrame:GetChildren()) do
+						if v:IsA("UIListLayout") then continue end
+						if not skills[v.Name] then
+							skills[v.Name] = 0
+						end
+					end
+					
 					for i,v in pairs(skills) do
 						if v ~= 0 then skills[i] -= 1 continue end
 						if i == "Guard" then continue end
@@ -389,7 +394,12 @@ local Afk_Auto_Play = function()
 					end
 					local chosen = t_skill[math.random(1, #t_skill)]
 					skills[chosen] = abilities_module[chosen].Cooldown
-					aac_combat("Ability", enemy, chosen)
+
+					if abilities_module[i].TargetType == "Self" then
+						aac_combat("Ability", plr.Character, chosen)
+					else
+						aac_combat("Ability", enemy, chosen)
+					end
 					task.wait(1)
 				end
 			end
@@ -554,15 +564,6 @@ if not lobby then
 		plr:GetAttributeChangedSignal(i):Connect(function()
 			plr_stats[i] = plr:GetAttribute(i)
 		end)
-	end
-
-	for i,v in pairs(classes_module) do
-		if i == plr:GetAttribute("Class") then
-			for skill,lvl_req in pairs(v.Abilities) do
-				skills[skill] = 0
-			end
-			break
-		end
 	end
 
 	if plr.PlayerGui:FindFirstChild("TitleScreen") then
