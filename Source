@@ -16,12 +16,12 @@ if plr.PlayerGui:FindFirstChild("NickAAC") then return end
 
 local lobby = false
 
-function missing(t, f, fallback)
+function checking(t, f, fallback)
 	if type(f) == t then return f end
 	return fallback
 end
 
-local queueteleport =  missing("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
+local queueteleport =  checking("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
 
 local modifiers_module
 local classes_module
@@ -80,8 +80,8 @@ local party_info = {
 			GameSpeed = 2;
 		}
 local skills = {
-	["Strike"] = 1,
-	["Guard"] = 1,
+	["Strike"] = 0,
+	["Guard"] = 0,
 }
 local plr_stats = {
 	["Class"] = nil,
@@ -102,10 +102,12 @@ local truecolor = Color3.fromRGB(170, 170, 0)
 local falsecolor = Color3.fromRGB(163, 162, 165)
 -----Settings-----
 
-local no_cliping : RBXScriptConnection
-local runner_sceneevent : RBXScriptConnection
-local runner_changeuievent : RBXScriptConnection
-local runner_combatturnevent : RBXScriptConnection
+local runners = {
+	runner_sceneevent = nil,
+	runner_changeuievent = nil,
+	runner_combatturnevent = nil,
+	runner_ontp = nil,
+}
 
 -----SetUp GUI-----
 
@@ -262,25 +264,6 @@ local function create_frame(parent, title: string, description: string, value: a
 	end
 end
 
-local function prefix_name(name)
-	--local prefix = string.match(name, "^(%a+)")
-	local prefix = string.match(name, "^([^%d#]+)")
-
-	return prefix
-end
-
-local function number_format(number)
-	local formatted = tostring(number)
-	local k
-	while true do
-		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-		if k == 0 then
-			break
-		end
-	end
-	return formatted
-end
-
 local function character_available()
 	local available = false
 	char = plr.Character
@@ -384,6 +367,7 @@ local Afk_Auto_Play = function()
 				local child = {}
 				for _,v in pairs(plr.PlayerGui.SceneGUI.Background.Options:GetChildren()) do
 					if v:IsA("UIListLayout") then continue end
+					if v.Name == "redpill" then continue end --// Avoid Getting out of the matrix and stop the process
 					table.insert(child, v)
 				end
 				if not child[1] then continue end
@@ -397,11 +381,16 @@ local Afk_Auto_Play = function()
 					local enemy = workspace.Enemies:GetChildren()[1]
 					local t_skill = {}
 					for i,v in pairs(skills) do
+						if v ~= 0 then skills[i] -= 1 continue end
 						if i == "Guard" then continue end
+						if abilities_module[i].TargetType == "SingleAlly" then continue end
+						if plr:GetAttribute("Energy") < abilities_module[i].Cost then continue end
 						table.insert(t_skill, i)
 					end
 					local chosen = t_skill[math.random(1, #t_skill)]
-					aac_combat("Ability", enemy, "Strike")
+					skills[chosen] = abilities_module[chosen].Cooldown
+					aac_combat("Ability", enemy, chosen)
+					task.wait(1)
 				end
 			end
 			
@@ -568,9 +557,9 @@ if not lobby then
 	end
 
 	for i,v in pairs(classes_module) do
-		if i == plr_stats.Class then
+		if i == plr:GetAttribute("Class") then
 			for skill,lvl_req in pairs(v.Abilities) do
-				skills[skill] = lvl_req
+				skills[skill] = 0
 			end
 			break
 		end
@@ -593,16 +582,10 @@ end
 
 --Function:
 close_button.MouseButton1Down:Connect(function()
-	if runner_sceneevent then
-		runner_sceneevent:Disconnect()
+	for i,v in pairs(runners) do
+		if not runners[i] then continue end
+		runners[i]:Disconnect()
 	end
-	if runner_changeuievent then
-		runner_changeuievent:Disconnect()
-	end
-	if runner_combatturnevent then
-		runner_combatturnevent:Disconnect()
-	end
-	
 	auto_play = false
 	auto_afk = false
 	DESTROYED = true
@@ -677,7 +660,7 @@ end
 
 -----Passive:
 if not lobby then
-	runner_sceneevent = rp.Remotes.SceneEvent.OnClientEvent:Connect(function(goal)
+	runners.runner_sceneevent = rp.Remotes.SceneEvent.OnClientEvent:Connect(function(goal)
 		if goal == "OpenEncounterUI" then
 			current_screen = "Encounter"
 		elseif goal == "OpenSceneUI" then
@@ -693,7 +676,7 @@ if not lobby then
 		end
 	end)
 
-	runner_changeuievent = rp.Remotes.ChangeUI.OnClientEvent:Connect(function(goal)
+	runners.runner_changeuievent = rp.Remotes.ChangeUI.OnClientEvent:Connect(function(goal)
 		if goal == "CloseTitle" then
 			current_screen = "Combat"
 		elseif goal == "GameOver" then
@@ -701,14 +684,14 @@ if not lobby then
 		end
 	end)
 
-	runner_combatturnevent = rp.Remotes.FireTurn.OnClientEvent:Connect(function()
+	runners.runner_combatturnevent = rp.Remotes.FireTurn.OnClientEvent:Connect(function()
 		if current_screen ~= "Combat" then
 			current_screen = "Combat"
 		end
 	end)
 end
 
-plr.OnTeleport:Once(function()
+runners.runner_ontp = plr.OnTeleport:Once(function()
 	if queueteleport then
 		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source'))()")
 	end
