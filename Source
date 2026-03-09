@@ -28,10 +28,10 @@ end
 
 local queueteleport = checking("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
 
-local modifiers_module = call_module(rp.Dictionaries.GameModifiers)
-local classes_module = call_module(rp.Dictionaries.Classes)
-local enemies_module = call_module(rp.Dictionaries.Enemies)
-local abilities_module = call_module(rp.Dictionaries.Abilities)
+local modifiers_module = call_module(rp.Dictionaries:FindFirstChild("GameModifiers"))
+local classes_module = call_module(rp.Dictionaries:FindFirstChild("Classes"))
+local enemies_module = call_module(rp.Dictionaries:FindFirstChild("Enemies"))
+local abilities_module = call_module(rp.Dictionaries:FindFirstChild("Abilities"))
 
 local ProximityPrompts_Screen = plr.PlayerGui:FindFirstChild("ProximityPrompts")
 
@@ -378,7 +378,7 @@ local Afk_Auto_Play = function()
 					local enemy = workspace.Enemies:GetChildren()[1]
 					local allies = {}
 					local t_skill = {}
-					for _,v in pairs(plr.PlayerGui.PlayerInfo.AbilitiesFrame.AbilitiesScrollingFrame:GetChildren()) do
+					for _,v in pairs(plr.PlayerGui.PlayerGUI.PlayerInfo.AbilitiesFrame.AbilitiesScrollingFrame:GetChildren()) do
 						if v:IsA("UIListLayout") then continue end
 						if not skills[v.Name] then
 							skills[v.Name] = 0
@@ -395,7 +395,7 @@ local Afk_Auto_Play = function()
 					local chosen = t_skill[math.random(1, #t_skill)]
 					skills[chosen] = abilities_module[chosen].Cooldown
 
-					if abilities_module[i].TargetType == "Self" then
+					if abilities_module[chosen].TargetType == "Self" then
 						aac_combat("Ability", plr.Character, chosen)
 					else
 						aac_combat("Ability", enemy, chosen)
@@ -667,6 +667,9 @@ if not lobby then
 		elseif goal == "OpenSceneUI" then
 			current_screen = "Choice"
 		elseif goal == "OpenRestUI" then
+			for i,v in pairs(skills) do
+				skills[i] = 0
+			end
 			current_screen = "Rest"
 		elseif goal == "CloseRestUI" then
 			--current_screen = "Encounter"
