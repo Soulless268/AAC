@@ -1,3 +1,5 @@
+-- Date Updated -- 13:30 PM -- 9/3/2026 -- DD/MM/YYYY
+
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local players = game:GetService("Players")
@@ -12,6 +14,8 @@ local hum
 
 if plr.PlayerGui:FindFirstChild("NickAAC") then return end
 
+local lobby = false
+
 function missing(t, f, fallback)
 	if type(f) == t then return f end
 	return fallback
@@ -19,9 +23,10 @@ end
 
 local queueteleport =  missing("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
 
-local classes_module = require(rp.Dictionaries:WaitForChild("Classes"))
-local enemies_module = require(rp.Dictionaries:WaitForChild("Enemies"))
-local abilities_module = require(rp.Dictionaries:WaitForChild("Abilities"))
+local modifiers_module
+local classes_module
+local enemies_module
+local abilities_module
 
 local ProximityPrompts_Screen = plr.PlayerGui:FindFirstChild("ProximityPrompts")
 
@@ -34,7 +39,7 @@ if not ProximityPrompts_Screen then
 end
 
 local place_ids = {
-	80734098185936 , --Main
+	80734098185936 , --Main Lobby
 	111943251737481, --In Game
 }
 
@@ -42,8 +47,19 @@ local workspace_debug
 
 if table.find(place_ids, game.PlaceId) then
 	workspace_debug = workspace
+	if game.PlaceId == 80734098185936 then
+		lobby = true
+	end
 else
 	workspace_debug = workspace:FindFirstChild("Simulate"):FindFirstChild("Game")
+end
+
+if lobby then
+	modifiers_module = require(rp.Dictionaries:WaitForChild("GameModifiers"))
+else
+	classes_module = require(rp.Dictionaries:WaitForChild("Classes"))
+	enemies_module = require(rp.Dictionaries:WaitForChild("Enemies"))
+	abilities_module = require(rp.Dictionaries:WaitForChild("Abilities"))
 end
 
 -----Settings-----
@@ -56,6 +72,13 @@ local auto_play = false
 local auto_afk = true
 local current_screen = nil
 local frame_store = {}
+local modifiers_table = {}
+local party_info = {
+			PartySize = 1;
+			FriendsOnly = true;
+			StashCraft = true;
+			GameSpeed = 2;
+		}
 local skills = {
 	["Strike"] = 1,
 	["Guard"] = 1,
@@ -80,8 +103,6 @@ local falsecolor = Color3.fromRGB(163, 162, 165)
 -----Settings-----
 
 local no_cliping : RBXScriptConnection
-local runner_adddecen : RBXScriptConnection
-local runner_removedecen : RBXScriptConnection
 local runner_sceneevent : RBXScriptConnection
 local runner_changeuievent : RBXScriptConnection
 local runner_combatturnevent : RBXScriptConnection
@@ -102,11 +123,9 @@ local show_button : TextButton
 local close_button : TextButton
 local minimize_button : TextButton
 
+local quick_play : TextButton
 local auto_play_button : TextButton
 local auto_afk_button : TextButton
-local refresh_button : TextButton
-local add_decent_button : TextButton
-local remove_decent_button : TextButton
 
 --PreLoad Local Universals Function:
 local function UiCorner(Parent, Ui)
@@ -147,7 +166,6 @@ local function create_button_catagory(parent, name: string, frame)
 			current_catagory.Visible = true
 		end
 	end)
-	
 	
 	return button
 end
@@ -276,77 +294,6 @@ local function character_available()
 
 	return available
 
-end
-
-local function nocliping()
-	if not character_available() then return end
-
-	for _, child in pairs(char:GetDescendants()) do
-		if child:IsA("BasePart") and child.CanCollide == true then
-			char_no_clip_list[child] = child.CanCollide
-			child.CanCollide = false
-		end
-	end
-
-end
-
-local function cliping()
-	if not character_available() then return end
-
-	if no_cliping then
-		no_cliping:Disconnect()
-		no_cliping = nil
-	end
-
-	for i,v in pairs(char_no_clip_list) do
-		i.CanCollide = v
-	end
-
-	char_no_clip_list = {}
-end
-
-local function go_to_pos(pos : CFrame|Vector3, magnitude : number)
-	if not character_available() then return end
-
-	local speed = 200
-	local minTime = 0.01
-	local maxTime = 15
-
-	local distance = magnitude
-
-	local time_ = distance / speed
-
-	time_ = math.clamp(time_, minTime, maxTime)
-
-	if typeof(pos) == "Vector3" then
-		pos = CFrame.new(pos)
-	elseif typeof(pos) == "CFrame" then
-		pos = pos
-	end
-
-	local tween = tws:Create(hrp, TweenInfo.new(time_), {CFrame = pos})
-	tween:Play()
-
-	tween.Completed:Once(function()
-		if hrp then
-			hrp.Anchored = false
-		end
-	end)
-
-end
-
-local function add_runner_add_decentdant()
-	local runner = workspace.DescendantAdded:Connect(function(child)
-		
-	end)
-	return runner
-end
-
-local function add_runner_remove_decendant()
-	local runner = workspace.DescendantRemoving:Connect(function(child)
-		
-	end)
-	return runner
 end
 
 --Preload InGame Function:
@@ -533,11 +480,13 @@ do
 			grid.VerticalAlignment = Enum.VerticalAlignment.Top
 			grid.Parent = farming_frame
 			
+			if lobby then
+				quick_play = create_frame(farming_frame, "Quick play", "Quick play with all the hardest modifirers", "Click")
+			end
+
 			auto_play_button = create_frame(farming_frame, "Auto Play (Not Work Rn)", "Auto Play (Not Work Rn)", auto_play)
 			
 			auto_afk_button = create_frame(farming_frame, "Auto AFK", "Auto AFK", auto_afk)
-
-			refresh_button = create_frame(farming_frame, "Refresh", "Refresh", "Click")
 
 		end
 		
@@ -563,9 +512,7 @@ do
 			grid.VerticalAlignment = Enum.VerticalAlignment.Top
 			grid.Parent = settings_frame
 
-			add_decent_button = create_frame(settings_frame, "Detect instance", "Detect instance that got added", run_add_decent)
 
-			remove_decent_button = create_frame(settings_frame, "Detect instance", "Detect instance that got removed", run_remove_decent)
 		end
 		
 		catagories_frame = Instance.new("ScrollingFrame")
@@ -611,36 +558,38 @@ do
 
 end
 -----// Startup:
-for i,v in pairs(plr_stats) do
-	plr_stats[i] = plr:GetAttribute(i)
-
-	plr:GetAttributeChangedSignal(i):Connect(function()
+if not lobby then
+	for i,v in pairs(plr_stats) do
 		plr_stats[i] = plr:GetAttribute(i)
+
+		plr:GetAttributeChangedSignal(i):Connect(function()
+			plr_stats[i] = plr:GetAttribute(i)
+		end)
+	end
+
+	for i,v in pairs(classes_module) do
+		if i == plr_stats.Class then
+			for skill,lvl_req in pairs(v.Abilities) do
+				skills[skill] = lvl_req
+			end
+			break
+		end
+	end
+
+	if plr.PlayerGui:FindFirstChild("TitleScreen") then
+		current_screen = "Title"
+	end
+
+	if auto_afk then
+		task.spawn(Afk_Auto_Play)
+	end
+
+	task.delay(2,function()
+		if not plr_stats.isLoaded then
+			plr_stats.isLoaded = true
+		end
 	end)
 end
-
-for i,v in pairs(classes_module) do
-	if i == plr_stats.Class then
-		for skill,lvl_req in pairs(v.Abilities) do
-			skills[skill] = lvl_req
-		end
-		break
-	end
-end
-
-if plr.PlayerGui:FindFirstChild("TitleScreen") then
-	current_screen = "Title"
-end
-
-if auto_afk then
-	task.spawn(Afk_Auto_Play)
-end
-
-task.delay(2,function()
-	if not plr_stats.isLoaded then
-		plr_stats.isLoaded = true
-	end
-end)
 
 --Function:
 close_button.MouseButton1Down:Connect(function()
@@ -687,62 +636,80 @@ show_button.Activated:Connect(function()
 	frame_store = {}
 end)
 
-refresh_button.Activated:Connect(function()
-	
-end)
+if quick_play then
+	quick_play.Activated:Connect(function()
+		for i, v in pairs(modifiers_module) do
+			if i == "Level 1" then continue end
+			if v.CealtGain < 0 then continue end
+			if v.PrestigeGain < 0 then continue end
+			modifiers_table[i] = true
+		end
+		--// Create the party
+		rp.Remotes.CreateParty:FireServer(party_info)
+		task.wait(1)
+		--// Modify party mode
+		rp.Remotes.PartyModifiers:FireServer(modifiers_table)
+		task.wait(1)
+		--// Start the game
+		rp.Remotes.PartyStart:FireServer()
+	end)
+end
 
-auto_play_button.Activated:Connect(function()
-	auto_play = not auto_play
-	auto_play_button.BackgroundColor3 = auto_play and truecolor or falsecolor
+if auto_play_button then
+	auto_play_button.Activated:Connect(function()
+		auto_play = not auto_play
+		auto_play_button.BackgroundColor3 = auto_play and truecolor or falsecolor
 	
-	AI_Auto_Play()
-	
-end)
+		AI_Auto_Play()
+	end)
+end
 
-auto_afk_button.Activated:Connect(function()
-	auto_afk = not auto_afk
-	auto_afk_button.BackgroundColor3 = auto_afk and truecolor or falsecolor
+if auto_afk_button then
+	auto_afk_button.Activated:Connect(function()
+		auto_afk = not auto_afk
+		auto_afk_button.BackgroundColor3 = auto_afk and truecolor or falsecolor
 
-	Afk_Auto_Play()
-end)
+		Afk_Auto_Play()
+	end)
+end
 
 --///// Settings
 
 -----Passive:
-runner_sceneevent = rp.Remotes.SceneEvent.OnClientEvent:Connect(function(goal)
-	if goal == "OpenEncounterUI" then
-		current_screen = "Encounter"
-	elseif goal == "OpenSceneUI" then
-		current_screen = "Choice"
-	elseif goal == "OpenRestUI" then
-		current_screen = "Rest"
-	elseif goal == "CloseRestUI" then
-		--current_screen = "Encounter"
-	elseif goal == "CloseEncounterUI" then
-		--current_screen = "Choice"
-	elseif goal == "CloseSceneUI" then
-		current_screen = "Combat" --Maybe Combat? or nil?
-	end
-end)
+if not lobby then
+	runner_sceneevent = rp.Remotes.SceneEvent.OnClientEvent:Connect(function(goal)
+		if goal == "OpenEncounterUI" then
+			current_screen = "Encounter"
+		elseif goal == "OpenSceneUI" then
+			current_screen = "Choice"
+		elseif goal == "OpenRestUI" then
+			current_screen = "Rest"
+		elseif goal == "CloseRestUI" then
+			--current_screen = "Encounter"
+		elseif goal == "CloseEncounterUI" then
+			--current_screen = "Choice"
+		elseif goal == "CloseSceneUI" then
+			current_screen = "Combat" --Maybe Combat? or nil?
+		end
+	end)
 
-runner_changeuievent = rp.Remotes.ChangeUI.OnClientEvent:Connect(function(goal)
-	if goal == "CloseTitle" then
-		current_screen = "Combat"
-	elseif goal == "GameOver" then
-		current_screen = "Over"
-	end
-end)
+	runner_changeuievent = rp.Remotes.ChangeUI.OnClientEvent:Connect(function(goal)
+		if goal == "CloseTitle" then
+			current_screen = "Combat"
+		elseif goal == "GameOver" then
+			current_screen = "Over"
+		end
+	end)
 
-runner_combatturnevent = rp.Remotes.FireTurn.OnClientEvent:Connect(function()
-	if current_screen ~= "Combat" then
-		current_screen = "Combat"
-	end
-end)
+	runner_combatturnevent = rp.Remotes.FireTurn.OnClientEvent:Connect(function()
+		if current_screen ~= "Combat" then
+			current_screen = "Combat"
+		end
+	end)
+end
 
-local tp_check = false
-plr.OnTeleport:Connect(function()
-	if not tp_check and queueteleport then
-		tp_check = true
+plr.OnTeleport:Once(function()
+	if queueteleport then
 		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source'))()")
 	end
 end)
