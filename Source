@@ -28,10 +28,10 @@ end
 
 local queueteleport = checking("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
 
-local modifiers_module = call_module(rp.Dictionaries:WaitForChild("GameModifiers"))
-local classes_module = call_module(rp.Dictionaries:WaitForChild("Classes"))
-local enemies_module = call_module(rp.Dictionaries:WaitForChild("Enemies"))
-local abilities_module = call_module(rp.Dictionaries:WaitForChild("Abilities"))
+local modifiers_module = call_module(rp.Dictionaries.GameModifiers)
+local classes_module = call_module(rp.Dictionaries.Classes)
+local enemies_module = call_module(rp.Dictionaries.Enemies)
+local abilities_module = call_module(rp.Dictionaries.Abilities)
 
 local ProximityPrompts_Screen = plr.PlayerGui:FindFirstChild("ProximityPrompts")
 
