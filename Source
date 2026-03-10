@@ -1,4 +1,4 @@
--- Date Updated -- 8:00 PM -- 9/3/2026 -- DD/MM/YYYY
+-- Date Updated -- 7:00 AM -- 10/3/2026 -- DD/MM/YYYY
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -68,6 +68,7 @@ local run_remove_decent = true
 local auto_play = false
 local auto_afk = true
 local current_screen = nil
+local current_encounter = nil
 local frame_store = {}
 local modifiers_table = {}
 local party_info = {
@@ -290,11 +291,43 @@ local aac_ready = function()
 	end
 end
 
+local aac_encounter_calculation = function(child)
+	for _,v in pairs(child) do
+		if v.Title.Text == "The Sword in the Stone" then
+			return v
+		elseif v.Title.Text == "Grandma's House" then
+			return v
+		elseif v.Title.Text == "Man in a Suit" then --// Avoid Getting out of the matrix and stop the process
+			continue
+		else
+			continue
+		end
+	end
+	return child[math.random(1, #child)]
+end
+
 -- Choose option path from 1 to 3 tbl_upvw[1] to tbl_upvw[3] or can be title name like "Busted Caravan"
 local aac_encounter_choice = function(option)
 	if current_screen == "Encounter" then
 		rp.Remotes.VotingEvent:FireServer("Encounter", option)
 	end
+end
+
+local aac_choice_calculation = function(child)
+	for _,v in pairs(child) do
+		if current_encounter == "The Sword in the Stone" then
+			if v.Name == "Approach" or v.Name == "Take2" or v.Name == "Continue" then
+				return v
+			end
+		elseif current_encounter == "Grandma's House" then
+			if v.Name == "Accept" or v.Name == "Accept2" or v.Name == "Accept Sweets" then
+				return v
+			end
+		else
+			continue
+		end
+	end
+	return child[math.random(1, #child)]
 end
 
 -- Choose the choice when the menu option Appear for example "Attack while their guard is down"
@@ -354,7 +387,8 @@ local Afk_Auto_Play = function()
 					plr.PlayerGui.EncounterGUI.EncounterFrame.Background.Option2,
 					plr.PlayerGui.EncounterGUI.EncounterFrame.Background.Option3,
 				}
-				local chosen = child[math.random(1, #child)]
+				local chosen = aac_encounter_calculation(child)
+				current_encounter = chosen.Title.Text
 				aac_encounter_choice(chosen.Title.Text)
 				current_screen = nil
 			end
@@ -364,11 +398,10 @@ local Afk_Auto_Play = function()
 				local child = {}
 				for _,v in pairs(plr.PlayerGui.SceneGUI.Background.Options:GetChildren()) do
 					if v:IsA("UIListLayout") then continue end
-					if v.Name == "redpill" then continue end --// Avoid Getting out of the matrix and stop the process
 					table.insert(child, v)
 				end
 				if not child[1] then continue end
-				local chosen = child[math.random(1, #child)]
+				local chosen = aac_choice_calculation(child)
 				aac_choice(chosen.Name)
 				task.wait(.25)
 			end
@@ -676,6 +709,7 @@ if not lobby then
 		elseif goal == "CloseEncounterUI" then
 			--current_screen = "Choice"
 		elseif goal == "CloseSceneUI" then
+			current_encounter = nil
 			current_screen = "Combat" --Maybe Combat? or nil?
 		end
 	end)
@@ -690,6 +724,7 @@ if not lobby then
 
 	runners.runner_combatturnevent = rp.Remotes.FireTurn.OnClientEvent:Connect(function()
 		if current_screen ~= "Combat" then
+			current_encounter = nil
 			current_screen = "Combat"
 		end
 	end)
