@@ -298,6 +298,7 @@ local aac_encounter_calculation = function(child)
 		elseif v.Title.Text == "Grandma's House" then
 			return v
 		elseif v.Title.Text == "Man in a Suit" then --// Avoid Getting out of the matrix and stop the process
+			table.remove(child, table.find(child, v))
 			continue
 		else
 			continue
