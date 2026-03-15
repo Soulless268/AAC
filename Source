@@ -339,6 +339,20 @@ local aac_choice = function(choice_name)
 	end
 end
 
+local aac_combat_calculation = function()
+	local t_skill = {}
+	for i,v in pairs(skills) do
+		if v ~= 0 then skills[i] -= 1 continue end
+		if i == "Guard" then continue end
+		if i == "Taunt" then continue end
+		if abilities_module[i].TargetType == "SingleAlly" then continue end
+		if abilities_module[i].TargetType == "Self" and abilities_module[i].Cooldown == 0 then continue end
+		if plr:GetAttribute("Energy") < abilities_module[i].Cost then continue end
+		table.insert(t_skill, i)
+	end
+	return t_skill[math.random(1, #t_skill)]
+end
+
 -- in Combat goal like "Ability" "Focus"
 -- enemy are the character model of Enemy
 -- Skill Name like "Flame Bolt"
@@ -411,7 +425,6 @@ local Afk_Auto_Play = function()
 				if plr:GetAttribute("Turn") then
 					local enemy = workspace.Enemies:GetChildren()[1]
 					local allies = {}
-					local t_skill = {}
 					for _,v in pairs(plr.PlayerGui.PlayerGUI.PlayerInfo.AbilitiesFrame.AbilitiesScrollingFrame:GetChildren()) do
 						if v:IsA("UIListLayout") then continue end
 						if not skills[v.Name] then
@@ -419,14 +432,7 @@ local Afk_Auto_Play = function()
 						end
 					end
 					
-					for i,v in pairs(skills) do
-						if v ~= 0 then skills[i] -= 1 continue end
-						if i == "Guard" then continue end
-						if abilities_module[i].TargetType == "SingleAlly" then continue end
-						if plr:GetAttribute("Energy") < abilities_module[i].Cost then continue end
-						table.insert(t_skill, i)
-					end
-					local chosen = t_skill[math.random(1, #t_skill)]
+					local chosen = aac_combat_calculation()
 					skills[chosen] = abilities_module[chosen].Cooldown
 
 					if abilities_module[chosen].TargetType == "Self" then
@@ -593,10 +599,20 @@ end
 -----// Startup:
 if not lobby then
 	for i,v in pairs(plr_stats) do
-		plr_stats[i] = plr:GetAttribute(i)
-
-		plr:GetAttributeChangedSignal(i):Connect(function()
+		task.spawn(function()
 			plr_stats[i] = plr:GetAttribute(i)
+
+			if plr_stats[i] == nil then
+				for attempt = 1, 5 do
+					plr_stats[i] = plr:GetAttribute(i)
+					if plr_stats[i] ~= nil then break end
+					task.wait(1)
+				end
+			end
+			
+			plr:GetAttributeChangedSignal(i):Connect(function()
+				plr_stats[i] = plr:GetAttribute(i)
+			end)
 		end)
 	end
 
@@ -731,8 +747,31 @@ if not lobby then
 	end)
 end
 
-runners.runner_ontp = plr.OnTeleport:Once(function()
+runners.runner_ontp = plr.OnTeleport:Connect(function()
 	if queueteleport then
-		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source'))()")
+		queueteleport([[
+			repeat task.wait() until game:IsLoaded()
+
+			local url = "https://raw.githubusercontent.com/Soulless268/AAC/refs/heads/main/Source"
+			local maxAttempts = 5
+			local delayTime = 2
+
+			for i = 1, maxAttempts do
+				local success, result = pcall(function()
+					return game:HttpGet(url)
+				end)
+
+				if success and result then
+					local func = loadstring(result)
+					if func then
+						func()
+						break
+					end
+				end
+
+				warn("Attempt "..i.." failed, retrying...")
+				task.wait(delayTime)
+			end
+		]])
 	end
 end)
