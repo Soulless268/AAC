@@ -638,6 +638,7 @@ close_button.MouseButton1Down:Connect(function()
 		if not runners[i] then continue end
 		runners[i]:Disconnect()
 	end
+	can_cross_ = false
 	auto_play = false
 	auto_afk = false
 	DESTROYED = true
